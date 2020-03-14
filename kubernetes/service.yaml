@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tz0rk-service
+spec:
+  clusterIP: None
+  selector:
+    app: tz0rk-bot
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
