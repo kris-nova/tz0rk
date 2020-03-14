@@ -1,0 +1,10 @@
+name: "Joe Beda"
+waitTimeMinutes: 15 # How many minutes to wait before counting the twitter poll results
+enable: true # Turn the scene on/off
+message: "A man approaches He is of average height and sports a well-trimmed beard. He has a Diet Coke in one hand and wants to talk to you about his LightForge" 
+danger: 9 # A value 0-9, where 0 is danger free and 9 is the highest danger
+options: 
+ -  message: "Ask about LightForge"
+ -  message: "Tell him Coke Zero is better"
+ -  message: "Take his Diet Coke"
+    inventoryAdd: "Diet Coke"
