@@ -33,12 +33,15 @@ const (
 
 // Bot is the main bot service
 type Bot struct {
-	api *anaconda.TwitterApi
+	devMode bool
+	api     *anaconda.TwitterApi
 }
 
 // New will initialize a new Bot struct
-func New() *Bot {
-	return &Bot{}
+func New(devMode bool) *Bot {
+	return &Bot{
+		devMode: devMode,
+	}
 }
 
 // Auth will authenticate and validate or return an error
@@ -62,21 +65,27 @@ func (b *Bot) Auth() error {
 //
 // So basically, if this process isn't running while a tweet is tweeted with the query - it will be ignored forever.
 func (b *Bot) Run(errch chan error) {
-	v := url.Values{}
-	v.Set("result_type", "recent")
-	logger.Always("[API]  Finding recent tweets")
-	latestTweets, err := b.api.GetSearch(searchQuery, nil)
-	if err != nil {
-		logger.Warning("unable to find latest tweet: %v", err)
-		errch <- fmt.Errorf("unable to find latest tweet: %v", err)
-		return
-	}
-	logger.Always("Found %d tweets to process", len(latestTweets.Statuses))
-	for _, tweet := range latestTweets.Statuses {
-		if tweet.Id > b.getLast() {
-			b.cacheLast(tweet.Id)
+
+	if !b.devMode {
+		v := url.Values{}
+		v.Set("result_type", "recent")
+		logger.Always("[API]  Finding recent tweets")
+		latestTweets, err := b.api.GetSearch(searchQuery, nil)
+		if err != nil {
+			logger.Warning("unable to find latest tweet: %v", err)
+			errch <- fmt.Errorf("unable to find latest tweet: %v", err)
+			return
 		}
+		logger.Always("Found %d tweets to process", len(latestTweets.Statuses))
+		for _, tweet := range latestTweets.Statuses {
+			if tweet.Id > b.getLast() {
+				b.cacheLast(tweet.Id)
+			}
+		}
+	} else {
+		logger.Warning("Running in DevMode, bypassing check! This is dangerous in production!")
 	}
+
 	for {
 		v := url.Values{}
 		last := strconv.Itoa(int(b.getLast()))
@@ -93,7 +102,14 @@ func (b *Bot) Run(errch chan error) {
 			// Cache first so we don't fuck up and spam twitter
 			b.cacheLast(tweet.Id)
 			err := b.Process(tweet)
-			errch <- err
+			if err != nil {
+				errch <- err
+
+			}
+			if b.devMode {
+				logger.Always("Running in DevMode sleeping 10 minutes...")
+				time.Sleep(10 * time.Minute)
+			}
 		}
 		logger.Always("Hanging for %d minutes...", sleepTimeMinutes)
 		time.Sleep(time.Duration(sleepTimeMinutes) * time.Minute)

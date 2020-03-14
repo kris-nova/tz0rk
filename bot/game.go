@@ -16,10 +16,11 @@ limitations under the License.
 package bot
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
+
+	"github.com/kris-nova/logger"
 
 	"github.com/ChimeraCoder/anaconda"
 )
@@ -50,20 +51,20 @@ import (
 //      ]
 //   },
 func (b *Bot) Process(tweet anaconda.Tweet) error {
+	logger.Always("Processing tweet %d from %s", tweet.Id, tweet.User.ScreenName)
 	v := url.Values{}
 	v.Set("in_reply_to_status_id", strconv.Itoa(int(tweet.Id)))
-	entities := map[interface{}]interface{}{
-		"meeps": "meeps",
+	options := []string{
+		"Go deeper into the cave.",
+		"Go back the way you came.",
+		"Look around on the ground.",
 	}
-	jsonBytes, err := json.Marshal(&entities)
-	if err != nil {
-		return err
-	}
-	jsonStr := string(jsonBytes)
-	v.Set("entities", jsonStr)
 	exampleMessage := "You enter a cave. You:"
-	status := fmt.Sprintf("@%s %s", tweet.User.Name, exampleMessage)
-	b.api.PostTweet(status, v)
-
+	status := fmt.Sprintf("@%s /tz0rk\n\n%s", tweet.User.ScreenName, exampleMessage)
+	newTweet, err := b.api.PostTweetWithPoll(status, v, options, 1440)
+	if err != nil {
+		return fmt.Errorf("unable to post tweet: %v", err)
+	}
+	logger.Always("Posted tweet: %d", newTweet.Id)
 	return nil
 }

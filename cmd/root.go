@@ -31,7 +31,7 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		logger.Always("Welcome to Tz0rk!")
-		b := bot.New()
+		b := bot.New(devMode)
 		err := b.Auth()
 		if err != nil {
 			logger.Critical(err.Error())
@@ -50,6 +50,8 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+var devMode bool
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
@@ -60,5 +62,6 @@ func Execute() {
 }
 
 func init() {
-	//
+	rootCmd.Flags().BoolVarP(&devMode, "dev", "d", false, "enable dev mode which bypasses the cache autoloading")
+	rootCmd.Flags().IntVarP(&logger.Level, "verbosity", "v", 4, "verbosity level 0 (low) 4 (high)")
 }
